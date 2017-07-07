@@ -1,0 +1,53 @@
+@charset "UTF-8";
+
+html, body {
+  width: 100%;
+  margin: 0; padding: 0;
+  font-size: 100%;
+  color: black;
+  font-family: sans-serif;
+}
+
+.picker {
+  font-size: 1em;
+  display: block;
+  position: fixed;
+  width: 100%; height: 7.5em;
+  margin: 0 auto;
+  /*border: 1px solid gray;*/
+  overflow: hidden;
+}
+
+.center-view {
+  display: block;
+  position: absolute;
+  border-top: 1px solid rgba(200, 200, 200, 1);
+  border-bottom: 1px solid rgba(200, 200, 200, 1);
+  width: 100%; height: 1.5em;
+  top: 3em;
+}
+
+.slot {
+  display: inline-block;
+  min-width: 4em; height: auto;
+  margin: 0 auto;
+  text-align: center;
+  vertical-align: top;
+  /*border: 1px solid red;*/
+  transform: translateY(3em);
+  color: gray;
+}
+
+.option {
+  display: block;
+  font-size: 1em;
+  line-height: 1.5em
+}
+.option:after {
+  content: '';
+  position: absolute;
+}
+
+.chosen {
+  color: black;
+}
