@@ -35,7 +35,10 @@ $(()=>{
 
 $.fn.datetimepicker = function(){
   if( this[0].tagName !== 'INPUT' ) return false;
-  var dt = new datetimepicker();
+   dt = new Datetimepicker({
+    initDt: null,
+    id: 'test'
+  });
 };
 
 $('input').datetimepicker();
