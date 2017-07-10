@@ -8,9 +8,22 @@ html, body {
   font-family: sans-serif;
 }
 
+.mask {
+  width: 100%; height: 100%;
+  display: block;
+  position: fixed;
+  top: 0; left: 0;
+  background: rgba(120, 120, 120, .5);
+  z-index: 999;
+}
+
 .datetimepicker {
   position: fixed;
-  width: 100%
+  width: 80%;
+  height: calc( 1.5em * 6 );
+  left: 10%;
+  z-index: 1000;
+  box-shadow: 0px 0px 10px 2px;
 }
 
 .unit {
@@ -19,8 +32,10 @@ html, body {
     position: absolute;
     width: 100%;
     height: 1.5em;
+    line-height: 1.5em;
     top: 0;
-    background: rgba(136, 136, 136, 0.81);
+    background: rgba(136, 136, 136, 0.8);
+    z-index: 999;
 }
 
 .picker {
@@ -31,6 +46,7 @@ html, body {
   margin: 0 auto;
   /*border: 1px solid gray;*/
   overflow: hidden;
+  background: white;
 }
 
 .center-view {
@@ -67,18 +83,26 @@ html, body {
   color: black;
 }
 
-.button-group {
+.toolbar {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    top: 120px;
+    top: calc( 1.5em * 5 - 1px );
     position: absolute;
     box-sizing: border-box;
     border-top: 1px solid rgba(120, 120, 120, .5);
+    background: white;
 }
-.button-group div {
+.toolbar div {
   width: 100%;
   text-align: center;
   line-height: 1.5em;
   background: rgba(255, 255, 255, 0);
+}
+
+.unit, .picker {
+  border-radius: 3px 3px 0 0;
+}
+.toolbar {
+  border-radius: 0 0 3px 3px;
 }

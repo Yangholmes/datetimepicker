@@ -50,7 +50,7 @@ Datetimepicker.prototype = {
     </div>
   `,
   templateToolbar: `
-    <div class="button-group">
+    <div class="toolbar">
       <div>取消</div>
       <div>确定</div>
     </div>
