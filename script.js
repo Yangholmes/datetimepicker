@@ -1,7 +1,7 @@
 /* jshint esversion: 6 */
 $(()=>{
 
-  let moveEnable = false,
+  /*let moveEnable = false,
       position1, position2, positionNow, deltaY, chosen, slotHeight;
 
   $('.slot')
@@ -30,14 +30,20 @@ $(()=>{
     deltaY = e.changedTouches[0].clientY - position1;
     position2 = deltaY + positionNow;
     $(this).css('transform', 'translateY(' + position2 + 'px)');
-  });
+  });*/
 });
 
 $.fn.datetimepicker = function(){
   if( this[0].tagName !== 'INPUT' ) return false;
    dt = new Datetimepicker({
     initDt: null,
-    id: 'test'
+    datepicker: false,
+    format: 'M/d/Y',
+    id: 'test',
+    lang: 'en',
+    onSelect: (dt)=>{
+      console.log(dt);
+    }
   });
 };
 

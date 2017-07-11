@@ -20,8 +20,9 @@ Datetimepicker.prototype = {
   config: {},
   year: null, month: null, date: null, hour: null, minute: null,
   years: [], months: [], dates: [], hours: [], minutes: [],
+
   yearSlot: '', monthSlot: '', dateSlot: '', hourSlot: '', minuteSlot: '',
-  picker: '',
+  unitbar: '', picker: '', toolbar: '',
   unit: {
     cn: {
       'year': '年',
@@ -29,6 +30,13 @@ Datetimepicker.prototype = {
       'date': '日',
       'hour': '时',
       'minute': '分'
+    },
+    en: {
+      'year': 'Year',
+      'month': 'Month',
+      'date': 'Date',
+      'hour': 'Hour',
+      'minute': 'Minute'
     }
   },
 
@@ -42,17 +50,17 @@ Datetimepicker.prototype = {
   `,
   templateUnit: `
     <div class="unit">
-      <div class="year">年</div>
-      <div class="month">月</div>
-      <div class="date">日</div>
-      <div class="hour">时</div>
-      <div class="minute">分</div>
+      <div class="year"></div>
+      <div class="month"></div>
+      <div class="date"></div>
+      <div class="hour"></div>
+      <div class="minute"></div>
     </div>
   `,
   templateToolbar: `
     <div class="toolbar">
-      <div>取消</div>
-      <div>确定</div>
+      <div class="cancel">取消</div>
+      <div class="confirm">确定</div>
     </div>
   `,
   style: ``,
@@ -94,6 +102,8 @@ Datetimepicker.prototype = {
     this.generateMinutes(this.minute);
 
     this.generatePicker();
+    this.generateUnitbar();
+    this.generateToolbar();
 
     this.render();
   },
@@ -122,13 +132,15 @@ Datetimepicker.prototype = {
     this.dates = [];
     let dates = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28];
     if( [1,3,5,7,8,10,12].indexOf(this.month) !== -1 ){
-      this.dates.push(...dates,29,30,31);
+      // this.dates.push(...dates,29,30,31);
+      this.dates = dates.concat([29, 30, 31]);
     }
     else if( this.month !== 2 ){
-      this.dates.push(...dates,29,30);
+    this.dates = dates.concat([29, 30]);
     }
     else if( (this.year%100!=0&&this.year%4==0) || (this.year%100==0&&this.year%400==0) ){
-      this.dates.push(...dates,29);
+      // this.dates.push(...dates,29);
+      this.dates = dates.concat([29]);
     }
     else{
       this.dates = dates;
@@ -153,14 +165,15 @@ Datetimepicker.prototype = {
     return this.minutes;
   },
 
-  generateSlot: function (option, defaultIndex, slotClass) {
-    if( option.length === 0 ) return false;
-    for(let i=0;i<option.length;i++){
-      option[i] = ( $('<div>').addClass('option'+(i==defaultIndex?' chosen':'')).html(option[i]));
+  generateSlot: function (datas, defaultIndex, slotClass) {
+    let options = [],
+        offset = (2 - defaultIndex) * 16 * 1.5;
+    if( datas.length === 0 ) return false;
+    for(let i=0;i<datas.length;i++){
+      options[i] = ( $('<div>').addClass('option'+(i==defaultIndex?' chosen':'')).html(datas[i]));
     }
-    let offset = (2 - defaultIndex) * 16 * 1.5;
-    this[slotClass+'Slot'] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(option);
-    return this[slotClass+'Slot'];
+    this[slotClass+'Slot'] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(options);
+    return this.addSlotEventListener(this[slotClass+'Slot']);
   },
 
   generatePicker: function () {
@@ -178,22 +191,109 @@ Datetimepicker.prototype = {
     return this.picker;
   },
 
-  render: function () {
-    $('<div>').addClass('datetimepicker').append(this.templateUnit, this.picker, this.templateToolbar).appendTo($('body'));
+  generateUnitbar: function () {
+    let unitList = ['year', 'month', 'date', 'hour', 'minute'],
+        lang = this.config.lang ? this.config.lang : 'cn';
+    this.unitbar = $(this.templateUnit);
 
-    this.addEventListener();
+    unitList.forEach((e) => {
+      this.unitbar.find('.'+e).html(this.unit[lang][e]);
+    });
+    return this.unitbar;
   },
 
-  addEventListener: function () {
+  generateToolbar: function () {
+    this.toolbar = $(this.templateToolbar);
+    this.addToolbarEventListener(this.toolbar);
+    return this.toolbar;
+  },
 
+  render: function () {
+    this.close();
+    $('<div>').addClass('datetimepicker').append(this.unitbar, this.picker, this.toolbar).appendTo($('body')).fadeIn();
+  },
+
+  addSlotEventListener: function (slot) {
+    let moveEnable = false,
+        position1, position2, positionNow, deltaY, chosen, slotHeight,
+        that = this;
+
+    slot
+    .on('touchstart', function (e) {
+      moveEnable = true;
+      position1 = e.changedTouches[0].clientY;
+      slotHeight = parseInt( $(this).css('height') );
+      positionNow = parseInt( $(this).css('transform').match(/, *(-?\d+)\)$/)[1] );
+      $(this).find('.option').removeClass('chosen');
+    })
+    .on('touchend', function (e) {
+      moveEnable = false;
+      chosen = (position2/1.5/16).toFixed();
+      if( chosen>2 ) chosen = 2;
+      else if( chosen<0-slotHeight/1.5/16+3 ) chosen = 0-slotHeight/1.5/16+3;
+      $(this).css('transform', 'translateY(' + chosen*1.5*16 + 'px)');
+
+      chosen = parseInt(chosen);
+      let index = 2-chosen;
+      $(this).find('.option').eq(index).addClass( "chosen" );
+
+      that.updateSlot(e);
+    })
+    .on('touchmove', function (e) {
+      e.preventDefault();
+      if(!moveEnable) return false;
+      deltaY = e.changedTouches[0].clientY - position1;
+      position2 = deltaY + positionNow;
+      $(this).css('transform', 'translateY(' + position2 + 'px)');
+    });
+
+    return slot;
+  },
+
+  addToolbarEventListener: function (toolbar) {
+    toolbar.find('.cancel').on('touchstart', (e)=>{
+      $(e.currentTarget).css('background', 'rgba(136, 136, 136, 0.8)');
+    }).on('touchend', (e)=>{
+      $(e.currentTarget).css('background', 'none');
+      this.close();
+    });
+    toolbar.find('.confirm').on('touchstart', (e)=>{
+      $(e.currentTarget).css('background', 'rgba(136, 136, 136, 0.8)');
+    }).on('touchend', (e)=>{
+      $(e.currentTarget).css('background', 'none');
+      this.select();
+    });
+  },
+
+  updateSlot: function (e) {
+    let slot = e.currentTarget,
+        chosen = $(slot).find('.chosen'),
+        className = slot.className.replace('slot ', '');
+    this[className] = parseInt( chosen.html() );
+
+    if( className === 'month' || className === 'year' ){
+      if(this.date === 31 && [4,6,9,11].indexOf(this.month) !== -1){
+        this.date = 30;
+      }
+      else if(this.date >= 29 && this.month === 2){
+        this.date = 28;
+      }
+      this.generateDates();
+      $('.slot.date').replaceWith(this.dateSlot);
+    }
   },
 
   close: function () {
-
+    $('.datetimepicker').fadeOut(400, ()=>{ $('.datetimepicker').remove(); });
   },
 
   select: function () {
+    let format = this.config.format ? this.config.format : 'Y/M/d H:i',
+        dt = '';
+    dt = format.replace('Y', this.year).replace('M', this.month).replace('d', this.date).replace('H', this.hour).replace('i', this.minute);
 
+    this.close();
+    this.config.onSelect(dt);
   }
 
 };
