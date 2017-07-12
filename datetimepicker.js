@@ -210,7 +210,7 @@ Datetimepicker.prototype = {
 
   render: function () {
     this.close();
-    $('<div>').addClass('datetimepicker').append(this.unitbar, this.picker, this.toolbar).appendTo($('body')).fadeIn();
+    $('<div>').addClass('datetimepicker').append(this.unitbar, this.picker, this.toolbar).appendTo($('body'));
   },
 
   addSlotEventListener: function (slot) {
@@ -281,6 +281,10 @@ Datetimepicker.prototype = {
       this.generateDates();
       $('.slot.date').replaceWith(this.dateSlot);
     }
+  },
+
+  show: function () {
+    $('.datetimepicker').fadeIn(400);
   },
 
   close: function () {
