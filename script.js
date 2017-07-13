@@ -1,20 +1,22 @@
 /* jshint esversion: 6 */
-$(()=>{
-  
-});
+$(function () {
 
-$.fn.datetimepicker = function(){
-  if( this[0].tagName !== 'INPUT' ) return false;
-   dt = new Datetimepicker({
+  $('input#1').datetimepicker({
     initDt: null,
-    datepicker: false,
-    format: 'M/d/Y',
+    format: 'H:i',
     id: 'test',
-    lang: 'en',
-    onSelect: (dt)=>{
+    lang: 'cn',
+    size: 'small',
+    onSelect: function (dt) {
       console.log(dt);
     }
   });
-};
 
-$('input').datetimepicker();
+  $('input#2').datetimepicker({
+    size: 'big',
+  });
+
+  $('input#3').datetimepicker();
+
+
+});
