@@ -1,4 +1,29 @@
 /* jshint esversion: 6 */
+
+/**
+ * Yangholmes 2017-07-14
+ * @param  {[type]} config [description]
+ * @return {[type]}        [description]
+ */
+$.fn.datetimepicker = function(config){
+  if( this[0].tagName !== 'INPUT' ) return false;
+  if(!config) config={};
+  config.bindObj = this;
+  let dt = new Datetimepicker(config);
+
+  this.on('touchstart', (e)=>{
+    e.preventDefault();
+    $(e.currentTarget).blur();
+  }).on('touchend', (e)=>{
+    dt.show();
+  }).on('focusin', (e)=>{
+    e.preventDefault();
+    $(e.currentTarget).blur();
+    dt.show();
+  });
+};
+
+
 /**
  * Yangholmes 2017-07-07
  * @param  {[type]} initDt [description]
@@ -18,11 +43,14 @@ Datetimepicker.prototype = {
   constructor: Datetimepicker,
 
   config: {},
+  baseHeight: 16,
+  onSelect: null, onChange: null,
   year: null, month: null, date: null, hour: null, minute: null,
   years: [], months: [], dates: [], hours: [], minutes: [],
 
   yearSlot: '', monthSlot: '', dateSlot: '', hourSlot: '', minuteSlot: '',
   unitbar: '', picker: '', toolbar: '',
+  thisDateTimePicker: {},
   unit: {
     cn: {
       'year': '年',
@@ -63,7 +91,7 @@ Datetimepicker.prototype = {
       <div class="confirm">确定</div>
     </div>
   `,
-  style: ``,
+  style: ".picker,.slot{margin:0 auto}.option,.toolbar div,.unit{line-height:1.5em}.mask{width:100%;height:100%;display:block;position:fixed;top:0;left:0;background:rgba(50,50,50,.7);z-index:999}.datetimepicker{display:none;position:fixed;width:80%;height:calc(1.5em * 6);left:10%;top:calc(30% - 3em * 1.5);z-index:1000;border-radius:3px;box-shadow:0 0 10px 2px}.unit{display:flex;justify-content:space-around;position:absolute;width:100%;height:1.5em;top:0;background:rgba(136,136,136,.8);z-index:999}.picker,.toolbar{position:absolute;background:#fff;width:100%}.picker{font-size:1em;display:block;height:7.5em;overflow:hidden}.center-view{display:block;position:absolute;border-top:1px solid rgba(200,200,200,1);border-bottom:1px solid rgba(200,200,200,1);width:100%;height:1.5em;top:3em}.slot{display:inline-block;min-width:20%;height:auto;text-align:center;vertical-align:top;color:rgba(120,120,120,.5)}.option{display:block;font-size:1em}.option:after{content:'';position:absolute}.chosen{color:#000}.toolbar{display:flex;justify-content:space-around;top:calc(1.5em * 5 - 1px);box-sizing:border-box;border-top:1px solid rgba(120,120,120,.5)}.toolbar div{width:100%;text-align:center;background:rgba(255,255,255,0)}.picker,.unit{border-radius:3px 3px 0 0}.toolbar{border-radius:0 0 3px 3px}",
 
   /**
    * [initDateTimePicker description]
@@ -73,6 +101,8 @@ Datetimepicker.prototype = {
    */
   initDateTimePicker: function () {
     this.initDt(this.config.initDt, this.generate);
+    this.onSelect = this.config.onSelect ? this.config.onSelect : ()=>{};
+    this.onChange = this.config.onChange ? this.config.onChange : ()=>{};
   },
 
   /**
@@ -95,6 +125,9 @@ Datetimepicker.prototype = {
   },
 
   generate: function () {
+
+    this.generateStyle();
+
     this.generateYears(this.year);
     this.generateMonths(this.month);
     this.generateDates(this.date);
@@ -167,13 +200,32 @@ Datetimepicker.prototype = {
 
   generateSlot: function (datas, defaultIndex, slotClass) {
     let options = [],
-        offset = (2 - defaultIndex) * 16 * 1.5;
+        offset = (2 - defaultIndex) * this.baseHeight * 1.5;
     if( datas.length === 0 ) return false;
     for(let i=0;i<datas.length;i++){
       options[i] = ( $('<div>').addClass('option'+(i==defaultIndex?' chosen':'')).html(datas[i]));
     }
     this[slotClass+'Slot'] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(options);
     return this.addSlotEventListener(this[slotClass+'Slot']);
+  },
+
+  generateStyle: function () {
+    if( !$('.datetimepicker-style').length )
+      $('<style>').addClass('datetimepicker-style').html(this.style).appendTo('head');
+    switch (this.config.size) {
+      case 'regular':
+        this.baseHeight = 20;
+        break;
+      case 'small':
+        this.baseHeight = 16;
+        break;
+      case 'big':
+        this.baseHeight = 24;
+        break;
+      default:
+        this.baseHeight = 20;
+        break;
+    }
   },
 
   generatePicker: function () {
@@ -209,8 +261,7 @@ Datetimepicker.prototype = {
   },
 
   render: function () {
-    this.close();
-    $('<div>').addClass('datetimepicker').append(this.unitbar, this.picker, this.toolbar).appendTo($('body')).fadeIn();
+    this.thisDateTimePicker = $('<div>').addClass('datetimepicker').css('font-size', this.baseHeight+'px').append(this.unitbar, this.picker, this.toolbar).appendTo($('body'));
   },
 
   addSlotEventListener: function (slot) {
@@ -228,10 +279,10 @@ Datetimepicker.prototype = {
     })
     .on('touchend', function (e) {
       moveEnable = false;
-      chosen = (position2/1.5/16).toFixed();
+      chosen = (position2/1.5/that.baseHeight).toFixed();
       if( chosen>2 ) chosen = 2;
-      else if( chosen<0-slotHeight/1.5/16+3 ) chosen = 0-slotHeight/1.5/16+3;
-      $(this).css('transform', 'translateY(' + chosen*1.5*16 + 'px)');
+      else if( chosen<0-slotHeight/1.5/that.baseHeight+3 ) chosen = 0-slotHeight/1.5/that.baseHeight+3;
+      $(this).css('transform', 'translateY(' + chosen*1.5*that.baseHeight + 'px)');
 
       chosen = parseInt(chosen);
       let index = 2-chosen;
@@ -279,12 +330,24 @@ Datetimepicker.prototype = {
         this.date = 28;
       }
       this.generateDates();
-      $('.slot.date').replaceWith(this.dateSlot);
+      this.thisDateTimePicker.find('.slot.date').replaceWith(this.dateSlot);
     }
+
+    this.onChange();
+  },
+
+  show: function () {
+    // $('.datetimepicker').fadeIn(400);
+    if( !$('body .mask').length )
+      $('<div>').addClass('mask').appendTo( $('body') );
+    $('body .mask').show();
+    this.thisDateTimePicker.fadeIn(400);
   },
 
   close: function () {
-    $('.datetimepicker').fadeOut(400, ()=>{ $('.datetimepicker').remove(); });
+    // $('.datetimepicker').fadeOut(400, ()=>{ $('.datetimepicker').remove(); });
+    $('body .mask').hide();
+    this.thisDateTimePicker.fadeOut(400);
   },
 
   select: function () {
@@ -292,8 +355,9 @@ Datetimepicker.prototype = {
         dt = '';
     dt = format.replace('Y', this.year).replace('M', this.month).replace('d', this.date).replace('H', this.hour).replace('i', this.minute);
 
+    this.config.bindObj.val(dt);
     this.close();
-    this.config.onSelect(dt);
+    this.onSelect(dt);
   }
 
 };
