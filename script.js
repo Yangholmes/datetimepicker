@@ -37,7 +37,7 @@ $.fn.datetimepicker = function(){
   if( this[0].tagName !== 'INPUT' ) return false;
    dt = new Datetimepicker({
     initDt: null,
-    datepicker: false,
+    datepicker: true,
     format: 'M/d/Y',
     id: 'test',
     lang: 'en',
