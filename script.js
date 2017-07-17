@@ -2,7 +2,7 @@
 $(function () {
 
   $('input#1').datetimepicker({
-    initDt: null,
+    initDt: '1900-01-01',
     id: 'test',
     lang: 'cn',
     size: 'small',
