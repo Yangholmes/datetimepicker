@@ -16,7 +16,7 @@
   * Safari on iOS 7+
 
 ## 浏览器支持
- 只支持手机端浏览器
+ 只支持移动端浏览器
  * Android 4.0+ 原生浏览器或WebView
  * iOS 7+ Safari 浏览器
 
