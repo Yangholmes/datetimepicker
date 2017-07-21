@@ -8,7 +8,12 @@ html, body {
   font-family: sans-serif;
 }
 
-input{
-  margin: 1em;
-  display: block;
+label {
+  display: inline-block;
+  margin: 1em 0 1em 1em;
+  width: 6em;
+}
+input {
+  margin: 1em 0 1em 0;
+  display: inline-block;
 }

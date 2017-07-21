@@ -48,7 +48,7 @@ Datetimepicker.prototype = {
   year: null, month: null, date: null, hour: null, minute: null,
   years: [], months: [], dates: [], hours: [], minutes: [],
 
-  yearSlot: '', monthSlot: '', dateSlot: '', hourSlot: '', minuteSlot: '',
+  slots: {}, //  contains yearSlot, monthSlot, dateSlot, hourSlot, minuteSlot
   unitbar: '', picker: '', toolbar: '',
   thisDateTimePicker: {},
   unit: {
@@ -57,20 +57,25 @@ Datetimepicker.prototype = {
       'month': '月',
       'date': '日',
       'hour': '时',
-      'minute': '分'
+      'minute': '分',
+      'confirm': '确定',
+      'cancel': '取消'
     },
     en: {
       'year': 'Year',
       'month': 'Month',
       'date': 'Date',
       'hour': 'Hour',
-      'minute': 'Minute'
+      'minute': 'Minute',
+      'confirm': 'Sure',
+      'cancel': 'Cancel'
     }
   },
 
   templatePicker: `
     <div class="picker">
       <div class="center-view"></div>
+      <div class="slots"></div>
     </div>
   `,
   templateSlot: `
@@ -78,20 +83,13 @@ Datetimepicker.prototype = {
   `,
   templateUnit: `
     <div class="unit">
-      <div class="year"></div>
-      <div class="month"></div>
-      <div class="date"></div>
-      <div class="hour"></div>
-      <div class="minute"></div>
     </div>
   `,
   templateToolbar: `
     <div class="toolbar">
-      <div class="cancel">取消</div>
-      <div class="confirm">确定</div>
     </div>
   `,
-  style: ".picker,.slot{margin:0 auto}.option,.toolbar div,.unit{line-height:1.5em}.mask{width:100%;height:100%;display:block;position:fixed;top:0;left:0;background:rgba(50,50,50,.7);z-index:999}.datetimepicker{display:none;position:fixed;width:80%;height:calc(1.5em * 6);left:10%;top:calc(30% - 3em * 1.5);z-index:1000;border-radius:3px;box-shadow:0 0 10px 2px}.unit{display:flex;justify-content:space-around;position:absolute;width:100%;height:1.5em;top:0;background:rgba(136,136,136,.8);z-index:999}.picker,.toolbar{position:absolute;background:#fff;width:100%}.picker{font-size:1em;display:block;height:7.5em;overflow:hidden}.center-view{display:block;position:absolute;border-top:1px solid rgba(200,200,200,1);border-bottom:1px solid rgba(200,200,200,1);width:100%;height:1.5em;top:3em}.slot{display:inline-block;min-width:20%;height:auto;text-align:center;vertical-align:top;color:rgba(120,120,120,.5)}.option{display:block;font-size:1em}.option:after{content:'';position:absolute}.chosen{color:#000}.toolbar{display:flex;justify-content:space-around;top:calc(1.5em * 5 - 1px);box-sizing:border-box;border-top:1px solid rgba(120,120,120,.5)}.toolbar div{width:100%;text-align:center;background:rgba(255,255,255,0)}.picker,.unit{border-radius:3px 3px 0 0}.toolbar{border-radius:0 0 3px 3px}",
+  style: ".picker,.slot{margin:0 auto}.option,.toolbar div,.unit{line-height:1.5em}.mask{width:100%;height:100%;display:block;position:fixed;top:0;left:0;background:rgba(50,50,50,.7);z-index:999}.datetimepicker{display:none;position:fixed;width:80%;height:calc(1.5em * 6);left:10%;top:calc(30% - 3em * 1.5);z-index:1000;border-radius:3px;box-shadow:0 0 10px 2px}.unit{display:flex;justify-content:space-around;position:absolute;width:100%;height:1.5em;top:0;background:rgba(136,136,136,.8);z-index:999}.picker,.toolbar{position:absolute;background:#fff;width:100%}.picker{font-size:1em;display:block;height:7.5em;overflow:hidden}.center-view{display:block;position:absolute;border-top:1px solid rgba(200,200,200,1);border-bottom:1px solid rgba(200,200,200,1);width:100%;height:1.5em;top:3em}.slots{display:flex}.slot{display:inline-block;flex:1;height:100%;text-align:center;vertical-align:top;color:rgba(120,120,120,.5)}.option{display:block;font-size:1em}.option:after{content:'';position:absolute}.chosen{color:#000}.toolbar{display:flex;justify-content:space-around;top:calc(1.5em * 5 - 1px);box-sizing:border-box;border-top:1px solid rgba(120,120,120,.5)}.toolbar div{width:100%;text-align:center;background:rgba(255,255,255,0)}.picker,.unit{border-radius:3px 3px 0 0}.toolbar{border-radius:0 0 3px 3px}",
 
   /**
    * [initDateTimePicker description]
@@ -135,7 +133,7 @@ Datetimepicker.prototype = {
     this.generateMinutes(this.minute);
 
     this.generatePicker();
-    this.generateUnitbar();
+    // this.generateUnitbar();
     this.generateToolbar();
 
     this.render();
@@ -205,8 +203,9 @@ Datetimepicker.prototype = {
     for(let i=0;i<datas.length;i++){
       options[i] = ( $('<div>').addClass('option'+(i==defaultIndex?' chosen':'')).html(datas[i]));
     }
-    this[slotClass+'Slot'] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(options);
-    return this.addSlotEventListener(this[slotClass+'Slot']);
+    // this[slotClass+'Slot'] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(options);
+    this.slots[slotClass] = $(this.templateSlot).addClass(slotClass).css('transform', 'translateY('+offset+'px)').append(options);
+    return this.addSlotEventListener(this.slots[slotClass]);
   },
 
   generateStyle: function () {
@@ -229,34 +228,35 @@ Datetimepicker.prototype = {
   },
 
   generatePicker: function () {
-    let picker = $(this.templatePicker).attr( 'id', this.config.id );
+    let picker = $(this.templatePicker).attr( 'id', this.config.id ),
+        slots = picker.find('.slots'),
+        lang = this.config.lang ? this.config.lang : 'cn',
+        unitbar = $(this.templateUnit);
     if(this.config.timepicker === false && this.config.datepicker !== false){
-      picker.append([this.yearSlot, this.monthSlot, this.dateSlot]);
+      slots.append([this.slots.year, this.slots.month, this.slots.date]);
+      unitbar.append( ['year', 'month', 'date'].map((e)=>{return '<div class="'+e+'">'+this.unit[lang][e]+'</div>';}) );
     }
     else if(this.config.datepicker === false && this.config.timepicker !== false){
-      picker.append([this.hourSlot, this.minuteSlot]);
+      slots.append([this.slots.hour, this.slots.minute]);
+      unitbar.append( ['hour', 'minute'].map((e)=>{return '<div class="'+e+'">'+this.unit[lang][e]+'</div>';}) );
     }
     else{
-      picker.append([this.yearSlot, this.monthSlot, this.dateSlot, this.hourSlot, this.minuteSlot]);
+      slots.append([this.slots.year, this.slots.month, this.slots.date, this.slots.hour, this.slots.minute]);
+      unitbar.append( ['year', 'month', 'date', 'hour', 'minute'].map((e)=>{return '<div class="'+e+'">'+this.unit[lang][e]+'</div>';}) );
     }
     this.picker = picker;
+    this.unitbar = unitbar;
     return this.picker;
   },
 
-  generateUnitbar: function () {
-    let unitList = ['year', 'month', 'date', 'hour', 'minute'],
-        lang = this.config.lang ? this.config.lang : 'cn';
-    this.unitbar = $(this.templateUnit);
-
-    unitList.forEach((e) => {
-      this.unitbar.find('.'+e).html(this.unit[lang][e]);
-    });
-    return this.unitbar;
-  },
+  // generateUnitbar: function () {},
 
   generateToolbar: function () {
-    this.toolbar = $(this.templateToolbar);
-    this.addToolbarEventListener(this.toolbar);
+    let lang = this.config.lang ? this.config.lang : 'cn',
+        toolbar = $(this.templateToolbar);
+    toolbar.append( ['confirm', 'cancel'].map((e)=>{return '<div class="'+e+'">'+this.unit[lang][e]+'</div>';}) );
+    this.addToolbarEventListener(toolbar);
+    this.toolbar = toolbar;
     return this.toolbar;
   },
 
@@ -330,7 +330,7 @@ Datetimepicker.prototype = {
         this.date = 28;
       }
       this.generateDates();
-      this.thisDateTimePicker.find('.slot.date').replaceWith(this.dateSlot);
+      this.thisDateTimePicker.find('.slot.date').replaceWith(this.slots.date);
     }
 
     this.onChange();
@@ -346,8 +346,8 @@ Datetimepicker.prototype = {
 
   close: function () {
     // $('.datetimepicker').fadeOut(400, ()=>{ $('.datetimepicker').remove(); });
-    $('body .mask').hide();
-    this.thisDateTimePicker.fadeOut(400);
+    // $('body .mask').hide();
+    this.thisDateTimePicker.fadeOut(400, ()=>{$('body .mask').hide()});
   },
 
   select: function () {

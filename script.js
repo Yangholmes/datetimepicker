@@ -15,7 +15,25 @@ $(function () {
     size: 'big',
   });
 
-  $('input#3').datetimepicker();
+  $('input#3').datetimepicker({
 
+  });
 
+  $('input#4').datetimepicker({
+    timepicker: false,
+    format: 'Y-M-d'
+  });
+
+  $('input#5').datetimepicker({
+    datepicker: false,
+    format: 'H:i'
+  });
+
+  $('input#6').datetimepicker({
+      lang: 'en'
+  });
+
+  $('input#7').datetimepicker({
+      format: 'Y年M月d日H时i分'
+  });
 });

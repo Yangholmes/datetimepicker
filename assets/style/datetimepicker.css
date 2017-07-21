@@ -50,9 +50,15 @@
   top: 3em;
 }
 
+.slots {
+  display: flex;
+}
+
 .slot {
   display: inline-block;
-  min-width: 20%; height: auto;
+  flex: 1;
+  /*min-width: 20%; height: auto;*/
+  height: 100%
   margin: 0 auto;
   text-align: center;
   vertical-align: top;
